@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+    <h2>每日明細</h2>
+    <form method="GET" action="{{ url_for('records.daily') }}" class="d-flex gap-2 mt-2 mt-md-0">
+        <input type="date" name="date" class="form-control" value="{{ selected_date }}">
+        <button type="submit" class="btn btn-primary">查詢</button>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if records %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>分類</th>
+                        <th>備註</th>
+                        <th class="text-end">金額</th>
+                        <th class="text-center">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in records %}
+                    <tr>
+                        <td>
+                            <span class="badge {% if r.type == 'income' %}bg-success{% else %}bg-danger{% endif %} rounded-pill me-2">
+                                {{ '收入' if r.type == 'income' else '支出' }}
+                            </span>
+                            {{ r.category }}
+                        </td>
+                        <td class="text-muted">{{ r.note or '-' }}</td>
+                        <td class="text-end fw-bold {% if r.type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                            {{ '+' if r.type == 'income' else '-' }}${{ r.amount | round(0) | int }}
+                        </td>
+                        <td class="text-center">
+                            <a href="{{ url_for('records.edit_form', id=r.id) }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil"></i> 編輯
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-3">這天還沒有任何記錄喔！</p>
+            <a href="{{ url_for('records.add_form') }}" class="btn btn-outline-primary mt-2">新增一筆</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

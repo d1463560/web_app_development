@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>財務報表</h2>
+    <form method="GET" action="{{ url_for('reports.report') }}" class="d-flex gap-2">
+        <input type="month" name="month" class="form-control" value="{{ month or '' }}">
+        <button type="submit" class="btn btn-outline-primary">篩選</button>
+        {% if month %}
+        <a href="{{ url_for('reports.report') }}" class="btn btn-outline-secondary">清除</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="row">
+    <!-- 支出分類圖 (圓餅圖) -->
+    <div class="col-lg-5 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-center mb-4">支出分類統計</h5>
+                {% if category_data %}
+                <canvas id="categoryChart"></canvas>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <p>尚無支出記錄</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 每日收支趨勢 (折線圖) -->
+    <div class="col-lg-7 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title text-center mb-4">每日收支趨勢</h5>
+                {% if daily_data %}
+                <canvas id="dailyChart"></canvas>
+                {% else %}
+                <div class="text-center py-5 text-muted">
+                    <p>尚無收支記錄</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 渲染支出分類圓餅圖
+    const categoryData = {{ category_data | tojson | safe }};
+    if (categoryData && categoryData.length > 0) {
+        const ctxPie = document.getElementById('categoryChart').getContext('2d');
+        const labelsPie = categoryData.map(item => item.category);
+        const dataPie = categoryData.map(item => item.total);
+        
+        new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: labelsPie,
+                datasets: [{
+                    data: dataPie,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                        '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
+    }
+
+    // 渲染每日收支趨勢折線圖
+    const dailyData = {{ daily_data | tojson | safe }};
+    if (dailyData && dailyData.length > 0) {
+        const ctxLine = document.getElementById('dailyChart').getContext('2d');
+        const labelsLine = dailyData.map(item => item.date);
+        const incomeLine = dailyData.map(item => item.income);
+        const expenseLine = dailyData.map(item => item.expense);
+
+        new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: labelsLine,
+                datasets: [
+                    {
+                        label: '收入',
+                        data: incomeLine,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    },
+                    {
+                        label: '支出',
+                        data: expenseLine,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.1,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

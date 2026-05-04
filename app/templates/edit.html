@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="card-title mb-0">編輯記錄</h3>
+                    <form method="POST" action="{{ url_for('records.delete', id=record.id) }}" onsubmit="return confirm('確定要刪除這筆記錄嗎？');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i> 刪除</button>
+                    </form>
+                </div>
+                
+                <form method="POST" action="{{ url_for('records.edit_submit', id=record.id) }}">
+                    <div class="mb-3">
+                        <label class="form-label">類型</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="type" id="type_expense" value="expense" {% if record.type == 'expense' %}checked{% endif %} onchange="updateCategories()">
+                                <label class="form-check-label text-danger" for="type_expense">支出</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="type" id="type_income" value="income" {% if record.type == 'income' %}checked{% endif %} onchange="updateCategories()">
+                                <label class="form-check-label text-success" for="type_income">收入</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">金額</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="amount" name="amount" min="1" step="any" value="{{ record.amount }}" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="category" class="form-label">分類</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <!-- Options populated by JS -->
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="date" class="form-label">日期</label>
+                        <input type="date" class="form-control" id="date" name="date" value="{{ record.date }}" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="note" class="form-label">備註 (可選)</label>
+                        <input type="text" class="form-control" id="note" name="note" value="{{ record.note }}">
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">儲存變更</button>
+                        <a href="{{ url_for('records.daily', date=record.date) }}" class="btn btn-light">取消</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const incomeCategories = {{ income_categories | tojson }};
+    const expenseCategories = {{ expense_categories | tojson }};
+    const currentCategory = "{{ record.category }}";
+    
+    function updateCategories() {
+        const typeIncome = document.getElementById('type_income').checked;
+        const categorySelect = document.getElementById('category');
+        categorySelect.innerHTML = '';
+        
+        const categories = typeIncome ? incomeCategories : expenseCategories;
+        categories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            if (cat === currentCategory) {
+                option.selected = true;
+            }
+            categorySelect.appendChild(option);
+        });
+    }
+    
+    // Initialize
+    updateCategories();
+</script>
+{% endblock %}
